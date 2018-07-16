@@ -4,7 +4,6 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "server": "ng serve",
     "build": "ng build",
     "lint": "ng lint"
   },
