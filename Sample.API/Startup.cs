@@ -40,9 +40,12 @@ namespace Sample.API
         private void SetupSimpleInjector(IServiceCollection services)
         {
             container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-
+            
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddSingleton<IControllerActivator>(new SimpleInjectorControllerActivator(container));
+            services.AddSingleton<IControllerActivator>(new SimpleInjectorControllerActivator(container));            
+
+            //note that we trimmed a little out of the SimpleInjector ASP.NET Core MVC boilerplate here
+            //  since we're not using view components or anything requiring crosswiring
 
             services.UseSimpleInjectorAspNetRequestScoping(container);
         }
@@ -50,20 +53,29 @@ namespace Sample.API
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            InitializeContainer(app);
+            InitializeContainer(app);            
 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+                app.UseCors(x => {
+                    //Sample.Presentation and Sample.API serve from different ports on localhost
+                    //this ensures that the client can still access the API
+                    x.WithOrigins("http://localhost:60686") 
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();                    
+                });
             }
 
             container.Verify();
 
-            app.UseMvc();
+            app.UseMvc(); //routing is managed by attribute on HelloWorldController
         }
 
         private void InitializeContainer(IApplicationBuilder app)
         {
+            //not registering view components because we don't have any
             container.RegisterMvcControllers(app);
 
             //bulk register repos
